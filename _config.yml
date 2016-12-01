@@ -14,13 +14,13 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 title: Dan Mork
-email: dan@humanstuff.com
+email: "dan@humanstuff.com"
+author: ""
 description: Developer. Co-Owner of HumanStuff.
 baseurl: "" # the subpath of your site, e.g. /blog
 url: https://danmork.github.io
 twitter_username: humanstuff
 github_username:  danmork
-permalink: /posts/:year/:month/:day/:title/
 
 # Build settings
 markdown: kramdown
