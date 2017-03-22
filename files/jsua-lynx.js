@@ -757,7 +757,7 @@ function addValidationExtensionsToContainerView(view, validation) {
 
 function addValidationExtensionsToInputView(view, validation) {
   view.addEventListener("change", function () {
-    var value = view.getValue();
+    var value = view.lynxGetValue();
     validateValue(validation, value);
     if (validation.state === validation.priorState) return;
     view.setAttribute("data-lynx-validation-state", validation.state);
