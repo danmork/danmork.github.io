@@ -783,7 +783,6 @@ function addValidationExtensionsToContainerView(view, validation) {
     if (validation.state === validation.priorState) return;
     view.setAttribute("data-lynx-validation-state", validation.state);
     raiseValiditionStateChangedEvent(view, validation);
-    view.lynxUpdateValidationContentVisibility();
   });
 }
 
@@ -793,10 +792,13 @@ function addValidationExtensionsToInputView(view, validation) {
   view.addEventListener("change", function () {
     var value = view.lynxGetValue();
     validateValue(validation, value);
-    if (validation.state === validation.priorState) return;
-    view.setAttribute("data-lynx-validation-state", validation.state);
-    raiseValiditionStateChangedEvent(view, validation);
-    view.lynxUpdateValidationContentVisibility();
+    if (validation.state !== validation.priorState) {
+      view.setAttribute("data-lynx-validation-state", validation.state);
+      raiseValiditionStateChangedEvent(view, validation);
+      view.lynxUpdateValidationContentVisibility();
+    } else if (validation.changes.length > 0) {
+      view.lynxUpdateValidationContentVisibility();
+    }
   });
 }
 
