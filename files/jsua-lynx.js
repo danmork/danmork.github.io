@@ -644,7 +644,7 @@ function textInputViewBuilder(node) {
   var view;
 
   var isLine = node.spec.hints.some(function (hint) {
-    return hint.name === "line";
+    return hint === "line";
   });
 
   if (isLine) {
@@ -8482,9 +8482,9 @@ exports.parse = function () {
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"_process":329}],323:[function(require,module,exports){
-window.jsuaLynx = require("./lib/index.js");
+window.jsuaLynx = require("./lib");
 
-},{"./lib/index.js":18}],324:[function(require,module,exports){
+},{"./lib":18}],324:[function(require,module,exports){
 /*!
  * The buffer module from node.js, for the browser.
  *
