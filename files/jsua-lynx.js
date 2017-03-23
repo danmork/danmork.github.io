@@ -783,6 +783,7 @@ function addValidationExtensionsToContainerView(view, validation) {
     if (validation.state === validation.priorState) return;
     view.setAttribute("data-lynx-validation-state", validation.state);
     raiseValiditionStateChangedEvent(view, validation);
+    view.lynxUpdateValidationContentVisibility();
   });
 }
 
