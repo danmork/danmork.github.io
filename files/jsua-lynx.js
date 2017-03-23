@@ -742,6 +742,26 @@ function addValidationExtensionsToView(view, validation) {
   } else {
     addValidationExtensionsToContainerView(view, validation);
   }
+
+  view.lynxUpdateValidationContentVisibility = function () {
+    function updateContentTargetVisibility(constraint) {
+      constraint.contentTargets.forEach(function (contentTarget) {
+        var contentView = findNearestElement(view, "[data-lynx-name='" + contentTarget.name + "']");
+        if (!contentView) return;
+        var visibility = contentTarget.forState === constraint.state ? "visible" : "hidden";
+        contentView.lynxSetVisibility(visibility);
+      });
+    }
+
+    updateContentTargetVisibility(validation);
+    validation.constraints.forEach(updateContentTargetVisibility);
+  };
+}
+
+function findNearestElement(view, selector) {
+  if (!view || view.matches("html")) return null;
+  if (!selector) return null;
+  return document.querySelector(selector) || findNearestElement(view.parentElement, selector);
 }
 
 function addValidationExtensionsToContainerView(view, validation) {
@@ -763,6 +783,7 @@ function addValidationExtensionsToContainerView(view, validation) {
     if (validation.state === validation.priorState) return;
     view.setAttribute("data-lynx-validation-state", validation.state);
     raiseValiditionStateChangedEvent(view, validation);
+    view.lynxUpdateValidationContentVisibility();
   });
 }
 
@@ -775,6 +796,7 @@ function addValidationExtensionsToInputView(view, validation) {
     if (validation.state === validation.priorState) return;
     view.setAttribute("data-lynx-validation-state", validation.state);
     raiseValiditionStateChangedEvent(view, validation);
+    view.lynxUpdateValidationContentVisibility();
   });
 }
 
@@ -805,6 +827,13 @@ function normalizeValidationConstraintSetObject(validation) {
   var initialConstraintStates = [];
   var initialConstraints = [];
 
+  function normalizeContentTargets(constraint) {
+    ["valid", "invalid", "unknown"].forEach(function (forState) {
+      var name = constraint[forState];
+      if (name) constraint.contentTargets.push({ forState: forState, name: name });
+    });
+  }
+
   Object.getOwnPropertyNames(validation).forEach(function (propertyName) {
     if (isValidationConstraintName(propertyName) === false) return;
 
@@ -815,6 +844,8 @@ function normalizeValidationConstraintSetObject(validation) {
       constraint.name = propertyName;
       constraint.state = constraint.state || "unknown";
       constraint.priorState = "";
+      constraint.contentTargets = [];
+      normalizeContentTargets(constraint);
       initialConstraintStates.push(constraint.state);
       initialConstraints.push(constraint);
     });
@@ -823,6 +854,8 @@ function normalizeValidationConstraintSetObject(validation) {
   validation.state = resolveValidationState(initialConstraintStates);
   validation.priorState = "";
   validation.constraints = initialConstraints;
+  validation.contentTargets = [];
+  normalizeContentTargets(validation);
 }
 
 function isValidationConstraintName(propertyName) {
