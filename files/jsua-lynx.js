@@ -790,15 +790,36 @@ function addValidationExtensionsToContainerView(view, validation) {
 function addValidationExtensionsToInputView(view, validation) {
   view.setAttribute("data-lynx-validation-state", validation.state);
 
+  function formatInputValue() {
+    var value = view.lynxGetValue();
+    if (!value || typeof value !== "string") return;
+
+    var formattedConstraints = validation.constraints.filter(function (constraint) {
+      return constraint.name === "text" && constraint.state === "valid" && "format" in constraint && "pattern" in constraint;
+    });
+
+    if (formattedConstraints.length === 0) return;
+
+    var formattedConstraint = formattedConstraints[0];
+    var regexp = (0, _validators.createRegExpForTextConstraintPattern)(formattedConstraint.pattern);
+    var formattedValue = value.replace(regexp, formattedConstraint.format);
+
+    view.lynxSetValue(formattedValue);
+  }
+
   view.addEventListener("change", function () {
     var value = view.lynxGetValue();
+
     validateValue(validation, value);
+
     if (validation.state !== validation.priorState) {
       view.setAttribute("data-lynx-validation-state", validation.state);
       raiseValiditionStateChangedEvent(view, validation);
       view.lynxUpdateValidationContentVisibility();
+      formatInputValue();
     } else if (validation.changes.length > 0) {
       view.lynxUpdateValidationContentVisibility();
+      formatInputValue();
     }
   });
 }
@@ -884,6 +905,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.noopValidator = noopValidator;
 exports.requiredValidator = requiredValidator;
+exports.createRegExpForTextConstraintPattern = createRegExpForTextConstraintPattern;
 exports.textValidator = textValidator;
 exports.numberValidator = numberValidator;
 exports.typeMatchesTypeRange = typeMatchesTypeRange;
@@ -895,6 +917,12 @@ function noopValidator() {
 function requiredValidator(constraint, value) {
   var valid = !(value === undefined || value === null || value === "" || Array.isArray(value) && value.length === 0);
   return valid ? "valid" : "invalid";
+}
+
+function createRegExpForTextConstraintPattern(pattern) {
+  if (pattern.substring(0, 1) !== "^") pattern = "^" + pattern;
+  if (pattern.substring(pattern.length - 1, 1) !== "$") pattern += "$";
+  return new RegExp(pattern);
 }
 
 function textValidator(constraint, value) {
@@ -913,10 +941,10 @@ function textValidator(constraint, value) {
   }
 
   if (constraint.pattern) {
-    var pattern = constraint.pattern;
-    if (pattern.substring(0, 1) !== "^") pattern = "^" + pattern;
-    if (pattern.substring(pattern.length - 1, 1) !== "$") pattern += "$";
-    if (new RegExp(pattern).test(value) === false) {
+    var regexp = createRegExpForTextConstraintPattern(constraint.pattern);
+    if (!regexp) {
+      return "unknown";
+    } else if (regexp.test(value) === false) {
       return "invalid";
     }
   }
