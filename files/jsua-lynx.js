@@ -78,6 +78,12 @@ function containerInputViewBuilder(node) {
     raiseValueChangeEvent(view);
   };
 
+  view.lynxHasValue = function (val) {
+    return Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).some(function (valueView) {
+      return valueView.value === val;
+    });
+  };
+
   return containers.buildChildViews(node).then(function (childViews) {
     childViews.forEach(appendChildView);
     return view;
@@ -219,10 +225,19 @@ function contentInputViewBuilder(node) {
     };
 
     view.lynxSetValue = function (blob) {
-      if (blob === value) return;
+      if (view.lynxHasValue(blob)) return;
       value = blob;
       raiseValueChangeEvent(view);
       return updateEmbeddedView(view, value);
+    };
+
+    view.lynxClearValue = function () {
+      view.lynxSetValue(null);
+    };
+
+    view.lynxHasValue = function (blob) {
+      // TODO: this should compare blob.type and the bytes in the blob
+      return value === blob;
     };
 
     inputView.addEventListener("change", function (evt) {
@@ -321,6 +336,10 @@ function contentViewBuilder(node) {
     if (node.value.alt) {
       embeddedView.setAttribute("alt", node.value.alt);
     }
+
+    view.lynxGetValue = function () {
+      return result.content.blob;
+    };
 
     return view;
   });
@@ -680,6 +699,14 @@ function textInputViewBuilder(node) {
     }
   };
 
+  view.lynxClearValue = function () {
+    view.lynxSetValue("");
+  };
+
+  view.lynxHasValue = function (val) {
+    return view.value === val;
+  };
+
   return view;
 }
 
@@ -703,6 +730,10 @@ function textViewBuilder(node) {
   } else {
     view.textContent = node.value.toString();
   }
+
+  view.lynxGetValue = function () {
+    return view.textContent;
+  };
 
   return view;
 }
