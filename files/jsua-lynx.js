@@ -84,6 +84,12 @@ function containerInputViewBuilder(node) {
     });
   };
 
+  view.lynxGetValue = function () {
+    return Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).map(function (valueView) {
+      return valueView.value;
+    });
+  };
+
   return containers.buildChildViews(node).then(function (childViews) {
     childViews.forEach(appendChildView);
     return view;
