@@ -573,7 +573,7 @@ function createConcealmentControlView(view, concealView, revealView) {
   visibilityControlView.type = "button";
   visibilityControlView.setAttribute("data-lynx-visibility-conceal", true);
 
-  concealView = concealView || document.createTextNode("conceal");
+  concealView = concealView || document.createTextNode("Conceal");
 
   view.lynxGetConcealView = function () {
     return concealView;
@@ -583,7 +583,7 @@ function createConcealmentControlView(view, concealView, revealView) {
     concealView = cv;
   };
 
-  revealView = revealView || document.createTextNode("reveal");
+  revealView = revealView || document.createTextNode("Reveal");
 
   view.lynxGetRevealView = function () {
     return revealView;
