@@ -720,6 +720,8 @@ function textInputViewBuilder(node) {
     textView.value = node.value.toString();
   }
 
+  view.appendChild(textView);
+
   view.lynxGetValue = function () {
     return textView.value;
   };
