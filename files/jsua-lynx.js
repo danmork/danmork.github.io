@@ -591,6 +591,7 @@ function createConcealmentControlView(view, concealView, revealView) {
 
   view.lynxSetRevealView = function (rv) {
     revealView = rv;
+    synchronizeVisibilityControlView();
   };
 
   function synchronizeVisibilityControlView() {
