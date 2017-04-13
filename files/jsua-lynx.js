@@ -78,18 +78,6 @@ function containerInputViewBuilder(node) {
     raiseValueChangeEvent(view);
   };
 
-  view.lynxHasValue = function (val) {
-    return Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).some(function (valueView) {
-      return valueView.value === val;
-    });
-  };
-
-  view.lynxGetValue = function () {
-    return Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).map(function (valueView) {
-      return valueView.value;
-    });
-  };
-
   return containers.buildChildViews(node).then(function (childViews) {
     childViews.forEach(appendChildView);
     return view;
@@ -231,19 +219,10 @@ function contentInputViewBuilder(node) {
     };
 
     view.lynxSetValue = function (blob) {
-      if (view.lynxHasValue(blob)) return;
+      if (blob === value) return;
       value = blob;
       raiseValueChangeEvent(view);
       return updateEmbeddedView(view, value);
-    };
-
-    view.lynxClearValue = function () {
-      view.lynxSetValue(null);
-    };
-
-    view.lynxHasValue = function (blob) {
-      // TODO: this should compare blob.type and the bytes in the blob
-      return value === blob;
     };
 
     inputView.addEventListener("change", function (evt) {
@@ -342,10 +321,6 @@ function contentViewBuilder(node) {
     if (node.value.alt) {
       embeddedView.setAttribute("alt", node.value.alt);
     }
-
-    view.lynxGetValue = function () {
-      return result.content.blob;
-    };
 
     return view;
   });
@@ -527,8 +502,6 @@ var _validation = require("./validation");
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-// import { addOptionsExtensionsToView } from "./options";
-
 function hasScope(node) {
   return node.value && _typeof(node.value) === "object" && "scope" in node.value;
 }
@@ -557,12 +530,13 @@ function nodeViewBuilder(node) {
     if (node.spec.name) view.setAttribute("data-lynx-name", node.spec.name);
     if (hasScope(node)) view.setAttribute("data-lynx-scope", node.value.scope);
     if (input) view.setAttribute("data-lynx-input", "true");
+    if (node.spec.options) view.setAttribute("data-lynx-options", node.spec.options);
     if (node.spec.option) view.setAttribute("data-lynx-option", "true");
     if (node.spec.labeledBy) view.setAttribute("data-lynx-labeled-by", node.spec.labeledBy);
     if (node.spec.submitter) view.setAttribute("data-lynx-submitter", node.spec.submitter);
     if (node.spec.validation) (0, _validation.addValidationExtensionsToView)(view, node.spec.validation);
-    if (node.spec.options) addOptionsExtensionsToView(view, node.spec);
     // data-lynx-marker-for
+    // data-lynx-validation-formatted
     // data-lynx-data-* properties
     return view;
   });
@@ -581,12 +555,69 @@ function addVisibilityExtensionsToView(view, initialVisibility) {
 
   initialVisibility = initialVisibility || "visible";
   view.setAttribute("data-lynx-visibility", initialVisibility);
+
+  if (initialVisibility !== "concealed" && initialVisibility !== "revealed") return;
+
+  var concealmentControlView = createConcealmentControlView(view);
+  view.insertAdjacentElement("afterbegin", concealmentControlView);
 }
 
 function raiseVisibilityChangedEvent(view) {
   var changeEvent = document.createEvent("Event");
   changeEvent.initEvent("lynx-visibility-change", true, false);
   view.dispatchEvent(changeEvent);
+}
+
+function createConcealmentControlView(view, concealView, revealView) {
+  var visibilityControlView = document.createElement("button");
+  visibilityControlView.type = "button";
+  visibilityControlView.setAttribute("data-lynx-visibility-conceal", true);
+
+  concealView = concealView || document.createTextNode("conceal");
+
+  view.lynxGetConcealView = function () {
+    return concealView;
+  };
+
+  view.lynxSetConcealView = function (cv) {
+    concealView = cv;
+  };
+
+  revealView = revealView || document.createTextNode("reveal");
+
+  view.lynxGetRevealView = function () {
+    return revealView;
+  };
+
+  view.lynxSetRevealView = function (rv) {
+    revealView = rv;
+  };
+
+  view.addEventListener("lynx-visibility-change", function () {
+    while (visibilityControlView.firstElementChild) {
+      visibilityControlView.removeChild(visibilityControlView.firstElementChild);
+    }
+
+    var visibility = view.lynxGetVisibility();
+
+    if (visibility === "concealed") {
+      visibilityControlView.appendChild(view.lynxGetRevealView());
+    } else if (visibility === "revealed") {
+      visibilityControlView.appendChild(view.lynxGetConcealView());
+    }
+  });
+
+  visibilityControlView.addEventListener("click", function () {
+    var visibility = view.lynxGetVisibility();
+
+    if (visibility === "concealed") {
+      view.lynxSetVisibility("revealed");
+    } else if (visibility === "revealed") {
+      view.lynxSetVisibility("concealed");
+    }
+  });
+
+  return visibilityControlView;
 }
 },{"../building":17,"./resolve-view-builder":11,"./validation":15}],11:[function(require,module,exports){
 "use strict";
@@ -667,50 +698,30 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.textInputViewBuilder = textInputViewBuilder;
 function textInputViewBuilder(node) {
-  var view;
+  var view = document.createElement("div");
 
   var isLine = node.spec.hints.some(function (hint) {
     return hint === "line";
   });
 
-  if (isLine) {
-    view = document.createElement("input");
+  var textView = isLine ? document.createElement("input") : document.createElement("textarea");
 
-    if (node.spec.visibility === "concealed") {
-      view.type = "password";
-    } else {
-      view.type = "text";
-    }
-  } else {
-    view = document.createElement("textarea");
-  }
-
-  view.name = node.spec.input.name || "";
+  textView.name = node.spec.input.name || "";
 
   if (node.value === null || node.value === undefined) {
-    view.value = "";
+    textView.value = "";
   } else {
-    view.value = node.value.toString();
+    textView.value = node.value.toString();
   }
 
   view.lynxGetValue = function () {
-    return view.value;
+    return textView.value;
   };
 
   view.lynxSetValue = function (val) {
-    var priorValue = view.value;
-    view.value = val;
-    if (priorValue !== view.value) {
-      raiseValueChangeEvent(view);
-    }
-  };
-
-  view.lynxClearValue = function () {
-    view.lynxSetValue("");
-  };
-
-  view.lynxHasValue = function (val) {
-    return view.value === val;
+    if (textView.value === val) return;
+    textView.value = val;
+    raiseValueChangeEvent(textView);
   };
 
   return view;
@@ -729,17 +740,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.textViewBuilder = textViewBuilder;
 function textViewBuilder(node) {
-  var view = document.createElement("pre");
+  var view = document.createElement("div");
+  var textView = document.createElement("pre");
+  view.appendChild(textView);
 
   if (node.value === null || node.value === undefined) {
-    view.textContent = "";
+    textView.textContent = "";
   } else {
-    view.textContent = node.value.toString();
+    textView.textContent = node.value.toString();
   }
-
-  view.lynxGetValue = function () {
-    return view.textContent;
-  };
 
   return view;
 }
