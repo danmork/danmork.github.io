@@ -594,8 +594,8 @@ function createConcealmentControlView(view, concealView, revealView) {
   };
 
   function synchronizeVisibilityControlView() {
-    while (visibilityControlView.firstElementChild) {
-      visibilityControlView.removeChild(visibilityControlView.firstElementChild);
+    while (visibilityControlView.firstChild) {
+      visibilityControlView.removeChild(visibilityControlView.firstChild);
     }
 
     var visibility = view.lynxGetVisibility();
