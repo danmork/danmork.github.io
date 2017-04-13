@@ -604,14 +604,23 @@ function createConcealmentControlView(view, concealView, revealView) {
       visibilityControlView.appendChild(view.lynxGetRevealView());
     } else if (visibility === "revealed") {
       visibilityControlView.appendChild(view.lynxGetConcealView());
+    } else {
+      view.removeEventListener("lynx-visibility-change", synchronizeVisibilityControlView);
+      view.removeChild(visibilityControlView);
+      delete view.lynxGetConcealView;
+      delete view.lynxSetConcealView;
+      delete view.lynxGetRevealView;
+      delete view.lynxSetRevealView;
+      visibilityControlView = revealView = concealView = null;
     }
   }
 
-  view.addEventListener("lynx-visibility-change", function () {
-    synchronizeVisibilityControlView();
-  });
+  view.addEventListener("lynx-visibility-change", synchronizeVisibilityControlView);
 
-  visibilityControlView.addEventListener("click", function () {
+  visibilityControlView.addEventListener("click", function (evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+
     var visibility = view.lynxGetVisibility();
 
     if (visibility === "concealed") {
