@@ -581,6 +581,7 @@ function createConcealmentControlView(view, concealView, revealView) {
 
   view.lynxSetConcealView = function (cv) {
     concealView = cv;
+    synchronizeVisibilityControlView();
   };
 
   revealView = revealView || document.createTextNode("Reveal");
