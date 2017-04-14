@@ -489,6 +489,7 @@ Object.defineProperty(exports, "__esModule", {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 exports.nodeViewBuilder = nodeViewBuilder;
+exports.createConcealmentControlView = createConcealmentControlView;
 
 var _building = require("../building");
 
@@ -548,9 +549,9 @@ function addVisibilityExtensionsToView(view, initialVisibility) {
   };
 
   view.lynxSetVisibility = function (visibility) {
-    var priorVisibility = view.lynxGetVisibility();
+    if (view.lynxGetVisibility() === visibility) return;
     view.setAttribute("data-lynx-visibility", visibility);
-    if (priorVisibility !== visibility) raiseVisibilityChangedEvent(view);
+    raiseVisibilityChangedEvent(view);
   };
 
   initialVisibility = initialVisibility || "visible";
@@ -558,8 +559,7 @@ function addVisibilityExtensionsToView(view, initialVisibility) {
 
   if (initialVisibility !== "concealed" && initialVisibility !== "revealed") return;
 
-  var concealmentControlView = createConcealmentControlView(view);
-  view.insertAdjacentElement("afterbegin", concealmentControlView);
+  view.insertAdjacentElement("afterbegin", exports.createConcealmentControlView(view));
 }
 
 function raiseVisibilityChangedEvent(view) {
@@ -568,12 +568,12 @@ function raiseVisibilityChangedEvent(view) {
   view.dispatchEvent(changeEvent);
 }
 
-function createConcealmentControlView(view, concealView, revealView) {
+function createConcealmentControlView(view) {
   var visibilityControlView = document.createElement("button");
   visibilityControlView.type = "button";
   visibilityControlView.setAttribute("data-lynx-visibility-conceal", true);
 
-  concealView = concealView || document.createTextNode("Conceal");
+  var concealView = document.createTextNode("Conceal");
 
   view.lynxGetConcealView = function () {
     return concealView;
@@ -584,7 +584,7 @@ function createConcealmentControlView(view, concealView, revealView) {
     synchronizeVisibilityControlView();
   };
 
-  revealView = revealView || document.createTextNode("Reveal");
+  var revealView = document.createTextNode("Reveal");
 
   view.lynxGetRevealView = function () {
     return revealView;
