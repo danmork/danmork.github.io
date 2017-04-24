@@ -66,7 +66,7 @@ function containerInputViewBuilder(node) {
     var valueToRemove = val || "";
 
     var itemViewsToRemove = Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).filter(function (valueView) {
-      return valueToRemove === valueView.value;
+      return valueToRemove === valueView.lynxGetValue();
     }).map(function (valueView) {
       return valueView.parentElement;
     });
@@ -80,7 +80,7 @@ function containerInputViewBuilder(node) {
 
   view.lynxGetValue = function () {
     return Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).map(function (valueView) {
-      return valueView.value;
+      return valueView.lynxGetValue();
     });
   };
 
@@ -96,7 +96,7 @@ function containerInputViewBuilder(node) {
 
   view.lynxHasValue = function (val) {
     return Array.from(view.querySelectorAll("[data-lynx-container-input-value]")).some(function (valueView) {
-      return valueView.value === val;
+      return valueView.lynxGetValue() === val;
     });
   };
 
